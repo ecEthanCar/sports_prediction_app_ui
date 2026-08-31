@@ -57,7 +57,7 @@ plot_quadrant <- function(ratings, title, subtitle = NULL, caption = NULL) {
       color = "white", stroke = 0.7
     ) +
     ggplot2::scale_fill_gradient2(
-      low = "#d32f2f", mid = "#f5f5f5", high = "#388e3c",
+      low = "#d32f2f", mid = "#fbc02d", high = "#388e3c",
       midpoint = 0, limits = c(-gd_limit, gd_limit),
       name = "Actual goal difference"
     ) +
