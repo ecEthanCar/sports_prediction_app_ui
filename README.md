@@ -1,9 +1,3 @@
----
-editor_options: 
-  markdown: 
-    wrap: 72
----
-
 # Double Poisson Modeler
 
 An interactive Shiny app for teaching the double Poisson model for
