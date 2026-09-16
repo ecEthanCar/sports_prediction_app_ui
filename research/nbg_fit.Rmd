@@ -1,0 +1,125 @@
+---
+title: "nbg_fit"
+output: html_document
+---
+
+```{r}
+# Extension: Compound Negative Binomial-Gamma Model
+#
+# Bypasses the Tweedie constraints by fitting the frequency and severity 
+# components independently. 
+#   1. Volume (n_shots) modeled via Negative Binomial to handle overdispersion.
+#   2. Severity (xg_mean_shot) modeled via Gamma, weighted by n_shots to 
+#      satisfy the conditional distribution math.
+
+library(MASS)
+library(dplyr)
+source("data_pipeline.R")
+
+# 1. Configuration & Data Prep
+LEAGUE  <- "EPL"
+SEASONS <- 2014:2024
+WINDOW  <- 5
+
+# Load and stack match data
+xg_matches <- bind_rows(lapply(SEASONS, function(s) fetch_and_cache_xg(LEAGUE, s))) |> 
+  arrange(season, date)
+matches_with_form <- compute_rolling_form(xg_matches, window = WINDOW)
+stacked_xg <- stack_xg_matches(matches_with_form, window = WINDOW)
+
+# Center the form covariates
+stacked_xg$att_roll_c <- stacked_xg$att_roll_xg - mean(stacked_xg$att_roll_xg)
+stacked_xg$def_roll_c <- stacked_xg$def_roll_xg_against - mean(stacked_xg$def_roll_xg_against)
+
+# 2. Shot-Level Aggregation
+# Pull the raw shots to calculate volume and mean quality per match
+shots <- readRDS(file.path("data", UNDERSTAT_SHOT_FILES[[LEAGUE]]))
+shots$side <- Reduce(dplyr::coalesce, unname(as.list(shots[intersect(c("h_a", "home_away"), names(shots))])))
+
+shot_agg <- shots |>
+  filter(as.numeric(season) %in% as.numeric(SEASONS), result != "OwnGoal", situation != "Penalty") |>
+  mutate(date = as.Date(date)) |>
+  group_by(match_id, side) |>
+  summarise(
+    date = first(date), # Keep date for the join
+    home_team = first(home_team), 
+    away_team = first(away_team), 
+    n_shots = n(), 
+    xg_sum = sum(xG, na.rm = TRUE), 
+    .groups = "drop"
+  ) |>
+  mutate(xg_mean_shot = xg_sum / n_shots) |>
+  dplyr::select(-match_id) # Drop the Understat ID so it doesn't clash
+
+# Join stacked team data with shot aggregates
+dat <- stacked_xg |>
+  mutate(
+    side = ifelse(home == 1, "h", "a"), 
+    home_team = ifelse(home == 1, att_name, def_name), 
+    away_team = ifelse(home == 1, def_name, att_name),
+    date = as.Date(date)
+  ) |>
+  inner_join(shot_agg, by = c("date", "home_team", "away_team", "side")) |>
+  filter(n_shots > 0, xg_mean_shot > 0)
+
+# 3. Fit the NB-G Components
+
+# Define the shared formula for both components
+rhs_base <- c("home", "ATT", "DEF")
+if (nlevels(dat$season_f) > 1L) rhs_base <- c("season_f", rhs_base)
+
+# Model A: Volume (Negative Binomial)
+form_volume <- stats::reformulate(rhs_base, response = "n_shots")
+fit_volume <- glm.nb(form_volume, data = dat)
+
+# Model B: Severity (Gamma, weighted by shot count)
+form_severity <- stats::reformulate(rhs_base, response = "xg_mean_shot")
+fit_severity <- glm(form_severity, family = Gamma(link = "log"), weights = n_shots, data = dat)
+
+# 4. Recombine & Evaluate
+
+# Calculate predicted total xG
+dat$pred_vol <- predict(fit_volume, type = "response")
+dat$pred_sev <- predict(fit_severity, type = "response")
+dat$pred_total_xg <- dat$pred_vol * dat$pred_sev
+
+# Evaluate fit metrics
+cat("\nNB-G COMPONENT DIAGNOSTICS\n")
+
+vol_summ <- summary(fit_volume)
+cat("\nVolume Model (Negative Binomial)\n")
+cat(sprintf("Theta (Dispersion):           %.3f\n", fit_volume$theta))
+cat(sprintf("Residual Deviance / DF:       %.3f (Target: ~1.0)\n", vol_summ$deviance / vol_summ$df.residual))
+
+sev_summ <- summary(fit_severity)
+cat("\nSeverity Model (Gamma)\n")
+cat(sprintf("Dispersion Parameter:         %.3f\n", sev_summ$dispersion))
+cat(sprintf("Residual Deviance / DF:       %.3f (Target: ~1.0)\n", sev_summ$deviance / sev_summ$df.residual))
+
+cat("\nCombined Expected Goals (xG)\n")
+cat(sprintf("RMSE:                         %.3f goals\n", sqrt(mean((dat$pred_total_xg - dat$xg_sum)^2))))
+cat(sprintf("Predicted vs Actual (r):      %.3f\n", cor(dat$pred_total_xg, dat$xg_sum)))
+```
+
+```{r}
+library(ggplot2)
+library(dplyr)
+
+ggplot(dat, aes(x = xg_sum, y = pred_total_xg)) +
+  geom_point(alpha = 0.4, color = "#1E7A5A", size = 2) +
+  geom_abline(intercept = 0, slope = 1, color = "#F2B705", linewidth = 1.2, linetype = "dashed") +
+  geom_smooth(method = "lm", color = "#0F2233", se = FALSE, linetype = "solid") +
+  coord_cartesian(xlim = c(0, 5), ylim = c(0, 5)) +
+  labs(
+    title = "Negative Binomial-Gamma: Predicted vs. Actual Match xG",
+    subtitle = "Yellow dashed line = Perfect prediction | Dark line = Actual model fit",
+    x = "Actual Match xG (Sum of Shots)",
+    y = "Predicted Match xG (Volume × Severity)"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(face = "bold", size = 14),
+    axis.title = element_text(face = "bold")
+  )
+
+```

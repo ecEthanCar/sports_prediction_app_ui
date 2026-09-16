@@ -62,11 +62,6 @@ ui <- fluidPage(
           )
         ),
         tabPanel(
-          "How the model works",
-          br(),
-          uiOutput("method_doc")
-        ),
-        tabPanel(
           "League quadrant map",
           br(),
           div(class = "plot-scroll",
@@ -76,6 +71,11 @@ ui <- fluidPage(
           "Team ratings",
           br(),
           tableOutput("ratings_table")
+        ),
+        tabPanel(
+          "How the model works",
+          br(),
+          uiOutput("method_doc")
         ),
         tabPanel(
           "Model summary",

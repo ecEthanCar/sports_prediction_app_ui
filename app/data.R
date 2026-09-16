@@ -51,6 +51,7 @@ normalise_matches <- function(df, tier_filter = NA_real_) {
     df <- df[df$tier == tier_filter, , drop = FALSE]
   }
   tibble::tibble(
+    Date   = as.Date(df$Date),
     Season = as.character(df$Season),
     ht     = as.character(df$home),
     at     = as.character(df$visitor),
