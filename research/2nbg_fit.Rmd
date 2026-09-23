@@ -1,0 +1,315 @@
+---
+title: "Part 2: Negative Binomial-Gamma decomposition"
+output: pdf_document
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+Part 1 showed that one Tweedie index cannot match both the
+volume/severity split and the skew of individual shots. Here the two
+components are fitted separately, with the same mean structure (season,
+home, team-season attack and defence), so each can carry its own
+distribution and be checked on its own:
+
+$$N \sim \text{NegBin}(\mu_N, \theta), \qquad \bar X \sim \text{Gamma}(\mu_X, \phi/N),
+\qquad \widehat{S} = \hat\mu_N \cdot \hat\mu_X$$
+
+Since both components are log-linear in the same covariates, the product
+is too, so the recombined mean is in the same family as the Tweedie's.
+The decomposition is for diagnosis and interpretation, not for better
+point prediction; Section 5 confirms nothing is lost.
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(message = FALSE, warning = FALSE)
+```
+
+```{r config}
+library(dplyr)
+library(ggplot2)
+library(MASS, exclude = "select")
+source("data_pipeline.R")
+
+LEAGUE  <- "EPL"
+SEASONS <- 2014:2024
+TWEEDIE_FILE <- file.path("output", "tweedie_fitted.rds")  # written by tweedie_fit.Rmd
+```
+
+## 1. Data
+
+Same build as Part 1.
+
+```{r data}
+xg_data <- prepare_xg_data(LEAGUE, SEASONS, exclude_penalties = TRUE)
+shots   <- xg_data$shots
+stacked <- xg_data$stacked
+rhs     <- model_rhs(stacked)
+C_team  <- attr(stacked, "contrasts_team")   # saved now; later joins drop attributes
+
+quality_rows <- stacked$n_shots > 0 & stacked$xg_mean_shot > 0
+cat("Team-match rows:", nrow(stacked), "\n")
+cat("Rows used for quality model:", sum(quality_rows), "\n")
+```
+
+## 2. Volume
+
+Is the Poisson assumption tenable?
+$\mathrm{Var}(N) = \mu + \mu^2/\theta$, so the variance-to-mean ratio is
+$1 + \mu/\theta$ at volume $\mu$.
+
+```{r volume}
+form_volume <- stats::reformulate(rhs, response = "n_shots")
+
+fit_pois <- glm(form_volume, family = poisson, data = stacked)
+fit_qp   <- glm(form_volume, family = quasipoisson, data = stacked)
+fit_nb   <- glm.nb(form_volume, data = stacked)
+
+mean_shots <- mean(stacked$n_shots)
+qp_disp    <- summary(fit_qp)$dispersion
+theta      <- fit_nb$theta
+
+cat("Quasi-Poisson dispersion:", round(qp_disp, 3), "\n")
+cat("NB theta:", round(theta, 2), " SE:", round(fit_nb$SE.theta, 2), "\n")
+cat("NB var/mean at average volume:", round(1 + mean_shots / theta, 3), "\n")
+cat("AIC Poisson:", round(AIC(fit_pois), 1), " AIC NB:", round(AIC(fit_nb), 1), "\n")
+cat("NB residual deviance / df:", round(deviance(fit_nb) / df.residual(fit_nb), 3), "\n")
+```
+
+Observed shot-count distribution vs. expected counts summed over all
+team-matches.
+
+```{r volume-plot}
+k <- 0:40
+count_fit <- data.frame(
+  shots    = k,
+  observed = as.numeric(table(factor(stacked$n_shots, levels = k))),
+  poisson  = sapply(k, function(j) sum(dpois(j, fitted(fit_pois)))),
+  negbin   = sapply(k, function(j) sum(dnbinom(j, size = theta, mu = fitted(fit_nb))))
+)
+
+ggplot(count_fit, aes(shots)) +
+  geom_col(aes(y = observed), fill = "grey75") +
+  geom_line(aes(y = poisson, colour = "Poisson")) +
+  geom_line(aes(y = negbin, colour = "Negative Binomial")) +
+  labs(x = "Shots in the match", y = "Team-matches", colour = NULL) +
+  theme_minimal()
+```
+
+## 3. Quality
+
+### 3a. Gamma GLM dispersion
+
+With shot-count weights, $\mathrm{Var}(\bar X) = \phi\,\mu^2 / N$, and
+deviance / df estimates $\phi$ rather than testing fit against 1. Under
+iid Gamma shots of shape $\alpha$, the benchmark is
+$\phi \approx 1/\alpha$, so that is what the estimate is compared with
+here.
+
+```{r quality}
+form_quality <- stats::reformulate(rhs, response = "xg_mean_shot")
+fit_gamma <- glm(form_quality, family = Gamma(link = "log"), weights = n_shots,
+                 data = stacked[quality_rows, ])
+
+ratio <- shots |>
+  mutate(team = ifelse(side == "h", home_team, away_team)) |>
+  group_by(team, season) |>
+  mutate(ratio = xG / mean(xG)) |>
+  pull(ratio)
+alpha_within <- 1 / var(ratio)
+
+gamma_disp <- summary(fit_gamma)$dispersion
+cat("Gamma GLM dispersion:", round(gamma_disp, 3), "\n")
+cat("Residual deviance / df:", round(deviance(fit_gamma) / df.residual(fit_gamma), 3), "\n")
+cat("Expected under iid Gamma shots (1/alpha):", round(1 / alpha_within, 3), "\n")
+cat("Ratio:", round(gamma_disp * alpha_within, 3), "\n")
+```
+
+### 3b. Shot-quality shape: single Gamma vs. two-component mixture
+
+The real test of the Gamma is the shape of individual shot xG. Both fits
+below are by maximum likelihood on positive non-penalty shots; the
+alternative is a two-component normal mixture on $\log x$,
+
+$$f(x) = \frac{1}{x}\left[w\,\varphi\!\left(\tfrac{\log x - m_1}{s_1}\right)\big/s_1 +
+(1-w)\,\varphi\!\left(\tfrac{\log x - m_2}{s_2}\right)\big/s_2\right]$$
+
+fitted by EM, as a stand-in for routine chances plus big chances. A
+Gamma with shape below 1 is unimodal with its mode at zero and cannot
+reproduce two modes.
+
+```{r shape-fits}
+x  <- shots$xG[shots$xG > 0]
+lx <- log(x)
+
+# Single Gamma MLE
+gamma_nll <- function(par) -sum(dgamma(x, shape = exp(par[1]), rate = exp(par[2]), log = TRUE))
+mom_alpha <- gamma_shape_mom(x)
+g_opt   <- optim(c(log(mom_alpha), log(mom_alpha / mean(x))), gamma_nll, method = "BFGS")
+g_shape <- exp(g_opt$par[1])
+g_rate  <- exp(g_opt$par[2])
+
+# Two-component normal mixture on log xG via EM
+em_mix <- function(y, iters = 500, tol = 1e-8) {
+  w <- 0.8
+  m <- as.numeric(quantile(y, c(0.3, 0.9)))
+  s <- rep(sd(y) / 2, 2)
+  ll_old <- -Inf
+  for (i in seq_len(iters)) {
+    d1 <- w * dnorm(y, m[1], s[1])
+    d2 <- (1 - w) * dnorm(y, m[2], s[2])
+    r  <- d1 / (d1 + d2)
+    w  <- mean(r)
+    m  <- c(sum(r * y) / sum(r), sum((1 - r) * y) / sum(1 - r))
+    s  <- sqrt(c(sum(r * (y - m[1])^2) / sum(r), sum((1 - r) * (y - m[2])^2) / sum(1 - r)))
+    ll <- sum(log(d1 + d2))
+    if (abs(ll - ll_old) < tol * abs(ll)) break
+    ll_old <- ll
+  }
+  list(w = w, mean = m, sd = s)
+}
+mix <- em_mix(lx)
+
+ll_gamma <- -g_opt$value
+ll_mix   <- sum(log(mix$w * dnorm(lx, mix$mean[1], mix$sd[1]) +
+                    (1 - mix$w) * dnorm(lx, mix$mean[2], mix$sd[2])) - lx)
+
+cat("Gamma MLE shape:", round(g_shape, 3), " (MoM shape:", round(mom_alpha, 3), ")\n")
+cat("AIC single Gamma:", round(-2 * ll_gamma + 4), "\n")
+cat("AIC mixture:     ", round(-2 * ll_mix + 10), "\n")
+cat("Mixture shares:", round(c(mix$w, 1 - mix$w), 3), "\n")
+cat("Mixture component medians (xG):", round(exp(mix$mean), 3), "\n")
+```
+
+```{r shape-plot}
+# Densities per log10 unit, to match a histogram on a log10 axis
+grid <- data.frame(xg = 10^seq(log10(min(x)), 0, length.out = 500))
+grid$gamma   <- dgamma(grid$xg, g_shape, g_rate) * grid$xg * log(10)
+grid$mixture <- (mix$w * dnorm(log(grid$xg), mix$mean[1], mix$sd[1]) +
+                 (1 - mix$w) * dnorm(log(grid$xg), mix$mean[2], mix$sd[2])) * log(10)
+
+ggplot(data.frame(xg = x), aes(xg)) +
+  geom_histogram(aes(y = after_stat(density)), bins = 60, fill = "grey75") +
+  geom_line(data = grid, aes(y = gamma, colour = "Single Gamma")) +
+  geom_line(data = grid, aes(y = mixture, colour = "Two-component mixture")) +
+  scale_x_log10() +
+  labs(x = "xG per shot (log scale)", y = "Density per log10 unit", colour = NULL) +
+  theme_minimal()
+```
+
+## 4. What makes teams good: team-season volume and quality effects
+
+Attack effects from the two component models, relative to each season's
+average team and adjusted for opponents and venue. A volume multiplier
+of 1.20 means 20% more shots than an average team would take in the same
+fixture; a quality multiplier of 1.10 means 10% more xG per shot.
+
+```{r team-effects}
+vol_att  <- extract_effects(fit_nb, "ATT", C_team)
+qual_att <- extract_effects(fit_gamma, "ATT", C_team)
+
+team_eff <- inner_join(
+  vol_att  |> dplyr::select(level, team, season, volume = multiplier, volume_se = std.error),
+  qual_att |> dplyr::select(level, quality = multiplier, quality_se = std.error),
+  by = "level"
+) |>
+  mutate(total = volume * quality)
+
+cat("Correlation of volume and quality effects (log scale):",
+    round(cor(log(team_eff$volume), log(team_eff$quality)), 3), "\n")
+cat("SD of log volume effect: ", round(sd(log(team_eff$volume)), 3), "\n")
+cat("SD of log quality effect:", round(sd(log(team_eff$quality)), 3), "\n")
+
+# Strongest attacks overall, with how each gets there
+team_eff |> arrange(desc(total)) |> head(10)
+
+# Highest quality relative to volume
+team_eff |> arrange(desc(quality)) |> head(10)
+```
+
+```{r team-effects-plot}
+to_label <- bind_rows(slice_max(team_eff, total, n = 6),
+                      slice_max(team_eff, quality, n = 3),
+                      slice_min(team_eff, total, n = 3)) |>
+  distinct(level, .keep_all = TRUE)
+
+ggplot(team_eff, aes(volume, quality)) +
+  geom_hline(yintercept = 1, linetype = "dashed") +
+  geom_vline(xintercept = 1, linetype = "dashed") +
+  geom_point(alpha = 0.6) +
+  geom_text(data = to_label, aes(label = paste(team, season)), size = 3, vjust = -0.8) +
+  labs(x = "Volume effect (shot multiplier vs. season average)",
+       y = "Quality effect (xG-per-shot multiplier vs. season average)") +
+  theme_minimal()
+```
+
+## 5. Recombined predictions and calibration
+
+$\widehat{S}_i = \hat\mu_{N,i}\,\hat\mu_{X,i}$, which is unbiased for
+$E[S]$ only if $N$ and $\bar X$ are conditionally independent, the
+compound model's third assumption and still untested. Calibration slope
+is the slope of actual on predicted, with 1 meaning calibrated.
+Regressing predicted on actual instead gives roughly $r^2$ for any
+calibrated predictor, which is what produced the apparent attenuation in
+the earlier version of this analysis; that slope is printed below for
+reference.
+
+```{r recombine}
+stacked$pred_volume  <- predict(fit_nb, newdata = stacked, type = "response")
+stacked$pred_quality <- predict(fit_gamma, newdata = stacked, type = "response")
+stacked$pred_nbg     <- stacked$pred_volume * stacked$pred_quality
+
+fit_metrics <- function(pred, actual) {
+  cal <- coef(lm(actual ~ pred))
+  c(rmse = sqrt(mean((pred - actual)^2)),
+    r = cor(pred, actual),
+    r2 = cor(pred, actual)^2,
+    cal_slope = cal[["pred"]],
+    cal_intercept = cal[["(Intercept)"]])
+}
+
+metrics <- rbind(nbg = fit_metrics(stacked$pred_nbg, stacked$xg))
+
+have_tweedie <- file.exists(TWEEDIE_FILE)
+if (have_tweedie) {
+  tw <- readRDS(TWEEDIE_FILE) |> dplyr::select(match_id, home, mu_tweedie)
+  stacked <- left_join(stacked, tw, by = c("match_id", "home"))
+  metrics <- rbind(metrics, tweedie = fit_metrics(stacked$mu_tweedie, stacked$xg))
+}
+round(metrics, 3)
+
+# For reference: slope of predicted on actual (the orientation of the old plot)
+cat("Slope of predicted on actual:",
+    round(coef(lm(pred_nbg ~ xg, data = stacked))[["xg"]], 3), "\n")
+```
+
+```{r calibration}
+bins <- calibration_bins(stacked$pred_nbg, stacked$xg)
+bins
+
+ggplot(stacked, aes(pred_nbg, xg)) +
+  geom_point(alpha = 0.1, size = 0.8) +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
+  geom_errorbar(data = bins, aes(x = mean_pred, ymin = lo, ymax = hi),
+                inherit.aes = FALSE, width = 0.04, colour = "red") +
+  geom_point(data = bins, aes(mean_pred, mean_actual), colour = "red") +
+  coord_cartesian(xlim = c(0, 3.5), ylim = c(0, 5)) +
+  labs(x = "Predicted npxG", y = "Actual npxG") +
+  theme_minimal()
+
+if (have_tweedie) calibration_bins(stacked$mu_tweedie, stacked$xg)
+```
+
+## 6. Summary
+
+- Volume: mildly overdispersed relative to Poisson; the Negative
+  Binomial absorbs it.
+- Severity: the Gamma's dispersion is close to the iid benchmark, but
+  shot xG is bimodal and no single Gamma fits it. This is where the
+  Tweedie's single-index constraint breaks.
+- Team-season effects separate cleanly into a volume multiplier and a
+  severity multiplier, which the aggregate Tweedie cannot provide.
+- Recombined predictions match the Tweedie and are calibrated across the
+  range, top decile included. The limit is explanatory power, not bias.
+
+Next: a mixture or beta model for severity, a test of independence
+between $N$ and $\bar X$, and player-level or game-state covariates.

@@ -1,0 +1,284 @@
+---
+title: "Part 1: Tweedie fit and the single-index test"
+output: pdf_document
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+Understat shot data, EPL 2014/15 to 2024/25. A team's match npxG is the
+sum of its non-penalty shot xG values, which factors exactly into volume
+and mean severity:
+
+$$S = \sum_{i=1}^{N} X_i = N \cdot \bar X$$
+
+The compound Poisson-Gamma (Tweedie) model is the usual choice for $S$.
+With constant dispersion, its index $p \in (1,2)$ simultaneously fixes
+the variance function, the elasticity split between $N$ and $\bar X$,
+and the Gamma shape of individual shots. Part 1 estimates $p$ from all
+three and asks whether they agree. Part 2 (`nbg_fit.Rmd`) fits the two
+components separately.
+
+Mean structure throughout, in both parts:
+
+$$\log \mu_{i} = \text{season}_{s(i)} + \beta\,\text{home}_i + \text{ATT}_{a(i)} + \text{DEF}_{d(i)}$$
+
+with team-season attack and defence effects, sum-to-zero within season.
+No form covariates.
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(message = FALSE, warning = FALSE)
+```
+
+```{r config}
+library(dplyr)
+library(ggplot2)
+library(Matrix)
+library(mcglm)
+source("data_pipeline.R")
+
+LEAGUE  <- "EPL"
+SEASONS <- 2014:2024
+set.seed(2026)
+dir.create("output", showWarnings = FALSE)
+```
+
+## 1. Data
+
+Penalties and own goals are removed from the fitted target, the shot
+counts and the shot-quality distribution alike, so all three estimates
+of $p$ use the same shots. Zero-shot sides are kept at xG = 0.
+
+```{r data}
+xg_data <- prepare_xg_data(LEAGUE, SEASONS, exclude_penalties = TRUE)
+shots   <- xg_data$shots
+stacked <- xg_data$stacked
+
+cat("Matches:", nrow(xg_data$matches), "\n")
+cat("Team-match rows:", nrow(stacked), "\n")
+cat("Rows with zero shots:", sum(stacked$n_shots == 0), "\n")
+cat("Shots:", nrow(shots), "\n")
+cat("Mean shots per team-match:", round(mean(stacked$n_shots), 2), "\n")
+cat("Mean npxG per team-match:", round(mean(stacked$xg), 3), "\n")
+```
+
+## 2. Team-season volume vs. quality
+
+Descriptive, before any model: do teams reach their xG through volume or
+severity? Grey curves are constant npxG per match
+($N \cdot \bar X = k$), so movement along a curve trades one for the
+other.
+
+```{r tactical-plot}
+team_seasons <- stacked |>
+  group_by(att_name, season) |>
+  summarise(volume = mean(n_shots),
+            quality = sum(xg) / sum(n_shots),
+            xg_pm = mean(xg), .groups = "drop") |>
+  mutate(label = paste(att_name, season))
+
+to_label <- bind_rows(slice_max(team_seasons, xg_pm, n = 5),
+                      slice_min(team_seasons, xg_pm, n = 3))
+
+iso_curves <- lapply(c(0.8, 1.2, 1.6, 2.0, 2.4), function(k)
+  geom_function(fun = function(v) k / v, colour = "grey70"))
+
+ggplot(team_seasons, aes(volume, quality)) +
+  iso_curves +
+  geom_point() +
+  geom_text(data = to_label, aes(label = label), size = 3, vjust = -0.8) +
+  coord_cartesian(ylim = range(team_seasons$quality)) +
+  labs(x = "Shots per match", y = "npxG per shot") +
+  theme_minimal()
+
+cat("SD of log volume: ", round(sd(log(team_seasons$volume)), 3), "\n")
+cat("SD of log quality:", round(sd(log(team_seasons$quality)), 3), "\n")
+```
+
+## 3. Tweedie fit
+
+$\mathrm{Var}(Y) = \phi\,\mu^{p}$ with $p$ estimated, fitted in `mcglm`
+with two covariance components: an identity term and a shared match
+term, so the two sides of a fixture are allowed to be correlated.
+
+Rank check first: mcglm reports a rank-deficient design with a
+misleading error, so fail here with the aliased columns named instead.
+
+```{r rank-check}
+rhs <- model_rhs(stacked)
+form_tweedie <- stats::reformulate(rhs, response = "xg")
+
+X_check <- model.matrix(form_tweedie, data = stacked)
+qrX <- qr(X_check)
+if (qrX$rank < ncol(X_check)) {
+  stop("Design is rank deficient. Aliased: ",
+       paste(head(colnames(X_check)[qrX$pivot[(qrX$rank + 1):ncol(X_check)]], 10), collapse = ", "))
+}
+cat("Regression parameters:", ncol(X_check), "on", nrow(stacked), "rows, full rank\n")
+rm(X_check, qrX)
+```
+
+```{r tweedie-fit}
+Z_id    <- mc_id(stacked)
+Z_match <- list(tcrossprod(Matrix::sparse.model.matrix(~ 0 + match_f, data = stacked)))
+
+fit_tweedie <- mcglm(
+  linear_pred = c(form_tweedie), matrix_pred = list(c(Z_id, Z_match)),
+  link = "log", variance = "tweedie", power_fixed = FALSE,
+  data = stacked,
+  control_algorithm = list(tuning = 0.5, max_iter = 100, correct = TRUE, verbose = FALSE)
+)
+
+coefs <- coef(fit_tweedie, std.error = TRUE)
+p_hat <- coefs$Estimates[coefs$Type == "power"]
+p_se  <- coefs$Std.error[coefs$Type == "power"]
+stacked$mu_tweedie <- as.numeric(fitted(fit_tweedie))
+
+coefs[coefs$Type != "beta", ]
+cat("Implied split at p_hat: volume", round(2 - p_hat, 3),
+    " quality", round(p_hat - 1, 3), "\n")
+```
+
+Home advantage as a multiplier on xG, and the within-match correlation.
+The covariance has tau11 on the diagonal plus tau12 for every pair of
+rows in the same match, so the implied correlation between the two sides
+is tau12 / (tau11 + tau12).
+
+```{r home-and-match}
+home_i  <- match("home", fit_tweedie$beta_names[[1]])
+home_b  <- coef(fit_tweedie, std.error = TRUE, type = "beta")[home_i, ]
+cat("Home multiplier:", round(exp(home_b$Estimates), 3),
+    " 95% CI:", round(exp(home_b$Estimates + c(-1.96, 1.96) * home_b$Std.error), 3), "\n")
+
+tau <- coefs$Estimates[coefs$Type == "tau"]
+cat("Implied within-match correlation:", round(tau[2] / (tau[1] + tau[2]), 3), "\n")
+cat("Raw correlation of home and away npxG:",
+    round(with(xg_data$matches, cor(home_xg, away_xg)), 3), "\n")
+```
+
+## 4. Test 1: volume/quality elasticities
+
+Under the compound model with constant dispersion,
+$E[N] \propto \mu^{2-p}$ and $E[\bar X] \propto \mu^{p-1}$. Regressing
+each component on $\log\hat\mu$ therefore recovers the split the fitted
+$p$ implies.
+
+Since $S = N \bar X$, the two slopes sum to about 1 whenever $\hat\mu$
+is calibrated, so the sum is a check on the fit rather than a test of
+the Tweedie. The test is the split. The SEs below treat $\log\hat\mu$ as
+fixed and ignore the within-match correlation.
+
+```{r elasticity}
+el_dat <- stacked |>
+  filter(mu_tweedie > 0) |>
+  mutate(log_mu = log(mu_tweedie))
+
+glm_volume  <- glm(n_shots ~ log_mu, family = quasipoisson(link = "log"), data = el_dat)
+glm_quality <- glm(xg_mean_shot ~ log_mu, family = Gamma(link = "log"),
+                   weights = n_shots, data = filter(el_dat, n_shots > 0, xg_mean_shot > 0))
+
+e_vol  <- summary(glm_volume)$coefficients["log_mu", 1:2]
+e_qual <- summary(glm_quality)$coefficients["log_mu", 1:2]
+
+elasticity <- data.frame(
+  component = c("volume", "quality"),
+  observed  = c(e_vol[1], e_qual[1]),
+  se        = c(e_vol[2], e_qual[2]),
+  tweedie   = c(2 - p_hat, p_hat - 1)
+)
+elasticity$z <- (elasticity$observed - elasticity$tweedie) / sqrt(elasticity$se^2 + p_se^2)
+elasticity
+
+cat("Sum of elasticities:", round(e_vol[1] + e_qual[1], 3), "\n")
+cat("Quasi-Poisson dispersion (shots on Tweedie mean):",
+    round(summary(glm_volume)$dispersion, 3), "\n")
+```
+
+## 5. Test 2: shot-quality shape
+
+The compound model makes each shot Gamma with shape
+$\alpha = (2-p)/(p-1)$, equivalently
+
+$$p = \frac{\alpha + 2}{\alpha + 1}$$
+
+Method-of-moments shape ($\hat\alpha = \bar x^2 / s^2$), pooled and
+within team-season (each shot divided by its team-season mean, removing
+between-team differences in average severity). Intervals from a
+bootstrap that resamples whole matches.
+
+```{r shape}
+shot_dat <- shots |>
+  mutate(team = ifelse(side == "h", home_team, away_team)) |>
+  group_by(team, season) |>
+  mutate(ratio = xG / mean(xG)) |>
+  ungroup()
+
+alpha_pooled <- gamma_shape_mom(shot_dat$xG)
+alpha_within <- 1 / var(shot_dat$ratio)
+
+by_match <- shot_dat |>
+  group_by(match_id) |>
+  summarise(n = n(), sx = sum(xG), sx2 = sum(xG^2),
+            sr = sum(ratio), sr2 = sum(ratio^2), .groups = "drop")
+
+mom_alpha <- function(n, s, s2) {
+  N <- sum(n)
+  m <- sum(s) / N
+  v <- (sum(s2) - N * m^2) / (N - 1)
+  m^2 / v
+}
+
+boot <- replicate(200, {
+  b <- by_match[sample.int(nrow(by_match), replace = TRUE), ]
+  c(pooled = mom_alpha(b$n, b$sx, b$sx2), within = mom_alpha(b$n, b$sr, b$sr2))
+})
+
+shape <- data.frame(
+  estimate = c("pooled", "within team-season"),
+  alpha    = c(alpha_pooled, alpha_within),
+  alpha_lo = apply(boot, 1, quantile, 0.025),
+  alpha_hi = apply(boot, 1, quantile, 0.975)
+)
+shape$p    <- p_from_shape(shape$alpha)
+shape$p_lo <- p_from_shape(shape$alpha_hi)
+shape$p_hi <- p_from_shape(shape$alpha_lo)
+shape
+
+cat("Shape implied by the observed split:", round(e_vol[1] / (1 - e_vol[1]), 3), "\n")
+cat("Shot-shape p vs fit, in SEs of p:", round((shape$p[2] - p_hat) / p_se, 1), "\n")
+```
+
+## 6. All estimates of p
+
+```{r p-compare}
+p_tbl <- data.frame(
+  source = c("Tweedie fit", "Volume elasticity", "Quality elasticity",
+             "Shape, pooled", "Shape, within team-season"),
+  p  = c(p_hat, 2 - e_vol[1], 1 + e_qual[1], shape$p),
+  lo = c(p_hat - 1.96 * p_se, 2 - e_vol[1] - 1.96 * e_vol[2],
+         1 + e_qual[1] - 1.96 * e_qual[2], shape$p_lo),
+  hi = c(p_hat + 1.96 * p_se, 2 - e_vol[1] + 1.96 * e_vol[2],
+         1 + e_qual[1] + 1.96 * e_qual[2], shape$p_hi)
+)
+p_tbl$source <- factor(p_tbl$source, levels = rev(p_tbl$source))
+p_tbl
+
+ggplot(p_tbl, aes(p, source)) +
+  geom_errorbarh(aes(xmin = lo, xmax = hi), height = 0.2) +
+  geom_point() +
+  xlim(1, 2) +
+  labs(x = "Tweedie index p", y = NULL) +
+  theme_minimal()
+```
+
+The fit and both elasticities agree near $p \approx 1.3$; the shape
+estimates sit near 1.66, several SEs of $\hat p$ above the fit, with
+tight intervals. No single index satisfies both the team-level split and
+the shot-level skew. Which of the compound model's assumptions fails
+(Poisson counts, Gamma severity, independence) cannot be read off here,
+which motivates Part 2.
+
+```{r save}
+saveRDS(stacked |> select(match_id, home, att_name, def_name, season, xg, n_shots, mu_tweedie),
+        file.path("output", "tweedie_fitted.rds"))
+```
