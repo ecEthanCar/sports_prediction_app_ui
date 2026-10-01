@@ -1,18 +1,4 @@
 # data_pipeline.R
-#
-# Shared data layer for the EPL goal and xG models.
-#
-#   Section A: Understat shot loading and filtering (single source of truth
-#              for which shots count, so every analysis uses the same data)
-#   Section B: Match-level tables (goals + non-penalty xG + shot counts)
-#   Section C: Rolling form (optional; used by the goal models)
-#   Section D: Stacking into team-match rows with sum-to-zero team contrasts
-#   Section E: One-call data prep for the xG decomposition analyses
-#   Section F: Small statistical and plotting helpers
-#
-# Legacy note: fetch_and_cache_xg() is kept unchanged for the older goal-model
-# scripts. It sums ALL shots (penalties and own goals included) and drops any
-# match where one side had no shots. The xG analyses use prepare_xg_data().
 
 library(dplyr)
 library(tidyr)
@@ -27,7 +13,7 @@ UNDERSTAT_SHOT_FILES <- c(
 RELEASE_BASE <- "https://github.com/JaseZiv/worldfootballR_data/releases/download/understat_shots/"
 
 # ============================================================================
-# Section A: Shots
+# Shots
 # ============================================================================
 
 # Load the raw Understat shot file (downloading once), with a clean `side`
@@ -63,7 +49,7 @@ filter_model_shots <- function(shots, seasons, exclude_penalties = TRUE) {
 }
 
 # ============================================================================
-# Section B: Match table
+# Match table
 # ============================================================================
 
 # One row per match with goals, xG and shot counts for each side.
@@ -136,7 +122,7 @@ fetch_and_cache_xg <- function(league_name = "EPL", season_year = 2021, force_re
 }
 
 # ============================================================================
-# Section C: Rolling form (optional)
+# Rolling form (optional)
 # ============================================================================
 
 # Adds lagged rolling sums of goals and xG for each side. Rows without a full
@@ -170,13 +156,15 @@ compute_rolling_form <- function(xg_matches, window = 5) {
     left_join(team_form, by = c("match_id", "away_team" = "team")) |> rename_with(~ paste0("away_", .x), all_of(roll_cols))
 
   keep <- stats::complete.cases(out[, c(paste0("home_", roll_cols), paste0("away_", roll_cols))])
+  message(sprintf("Rolling form (window %d): dropped %d of %d matches lacking history (%.1f%%).",
+                  window, sum(!keep), nrow(out), 100 * mean(!keep)))
   out <- out[keep, , drop = FALSE]
   attr(out, "window") <- window
   return(out)
 }
 
 # ============================================================================
-# Section D: Stacking
+# Stacking
 # ============================================================================
 
 # Sum-to-zero contrasts applied separately within each group (season), so
@@ -184,6 +172,10 @@ compute_rolling_form <- function(xg_matches, window = 5) {
 contr_sum_within <- function(level_labels, groups) {
   g <- factor(groups, levels = unique(groups))
   idx <- split(seq_along(level_labels), g)
+  if (any(lengths(idx) < 2L)) {
+    stop("Every group needs at least 2 levels to form a contrast. Offending: ",
+         paste(names(idx)[lengths(idx) < 2L], collapse = ", "))
+  }
   blocks <- lapply(idx, function(i) stats::contr.sum(length(i)))
   ncols <- vapply(blocks, ncol, integer(1))
   col_names <- unlist(lapply(seq_along(idx), function(k) if (length(idx) == 1L) as.character(seq_len(ncols[k])) else paste0(names(idx)[k], ".", seq_len(ncols[k]))), use.names = FALSE)
@@ -248,6 +240,9 @@ stack_xg_matches <- function(matches, team_season = NULL, window = NULL) {
     arrange(match_id, desc(home)) |>
     mutate(match_f = factor(match_id))
 
+  bad <- stacked |> count(match_id) |> filter(n != 2L)
+  if (nrow(bad) > 0) stop(nrow(bad), " match_id values do not have exactly 2 rows.")
+
   if (has_shots) {
     stacked <- stacked |> mutate(xg_mean_shot = ifelse(n_shots > 0, xg / n_shots, NA_real_))
   }
@@ -257,6 +252,7 @@ stack_xg_matches <- function(matches, team_season = NULL, window = NULL) {
   stacked$ATT <- C_team[as.integer(stacked$att), , drop = FALSE]
   stacked$DEF <- C_team[as.integer(stacked$def), , drop = FALSE]
 
+  C_season <- NULL
   if (n_seasons > 1L) {
     C_season <- stats::contr.sum(n_seasons)
     dimnames(C_season) <- list(season_levels, season_levels[-n_seasons])
@@ -265,12 +261,13 @@ stack_xg_matches <- function(matches, team_season = NULL, window = NULL) {
 
   attr(stacked, "team_levels") <- team_levels
   attr(stacked, "contrasts_team") <- C_team
+  attr(stacked, "contrasts_season") <- C_season
   attr(stacked, "window") <- window
   return(stacked)
 }
 
 # ============================================================================
-# Section E: One-call prep for the xG decomposition
+# One-call prep for the xG decomposition
 # ============================================================================
 
 # Returns the model shots, the match table, and the stacked team-match rows,
@@ -293,7 +290,7 @@ model_rhs <- function(stacked) {
 }
 
 # ============================================================================
-# Section F: Helpers
+# Helpers
 # ============================================================================
 
 # Method-of-moments Gamma shape.
@@ -318,16 +315,37 @@ calibration_bins <- function(pred, actual, n_bins = 10) {
     mutate(lo = mean_actual - 1.96 * se, hi = mean_actual + 1.96 * se)
 }
 
-XG_COLORS <- c(green = "#1E7A5A", navy = "#0F2233", gold = "#F2B705",
-               slate = "#5A6B7B", red = "#B23A48", grey = "grey60")
+# Level effects from a sum-to-zero coded term (team-season ATT/DEF, or
+# season_f). Under any sum-to-zero coding the level effects are M x beta with
+# covariance M V M', which gives correct SEs for every level, including the one
+# the coding leaves out. Works for glm/glm.nb fits and for mcglm fits.
+# Estimates are on the log scale; multiplier = exp(estimate) is relative to the
+# season average.
+extract_effects <- function(fit, prefix, contr_matrix) {
+  M <- as.matrix(contr_matrix)
+  target <- paste0(prefix, colnames(M))
 
-theme_xg <- function(base_size = 11) {
-  ggplot2::theme_minimal(base_size = base_size) +
-    ggplot2::theme(
-      plot.title = ggplot2::element_text(face = "bold", size = base_size + 3),
-      plot.subtitle = ggplot2::element_text(colour = "grey30"),
-      axis.title = ggplot2::element_text(face = "bold"),
-      panel.grid.minor = ggplot2::element_blank(),
-      legend.position = "bottom"
-    )
+  if (inherits(fit, "mcglm")) {
+    nm  <- fit$beta_names[[1]]
+    idx <- match(target, nm)
+    b   <- coef(fit, type = "beta")$Estimates[idx]
+    V   <- as.matrix(vcov(fit))[idx, idx, drop = FALSE]
+  } else {
+    idx <- match(target, names(coef(fit)))
+    b   <- coef(fit)[idx]
+    V   <- as.matrix(vcov(fit))[idx, idx, drop = FALSE]
+  }
+  if (anyNA(idx)) stop(sum(is.na(idx)), " `", prefix, "` columns are absent from the fit.")
+
+  eff <- as.vector(M %*% b)
+  se  <- sqrt(pmax(0, diag(M %*% V %*% t(M))))
+  out <- data.frame(level = rownames(M), estimate = eff, std.error = se,
+                    multiplier = exp(eff), stringsAsFactors = FALSE)
+
+  if (any(grepl("@", out$level, fixed = TRUE))) {
+    parts <- strsplit(out$level, "@", fixed = TRUE)
+    out$team   <- vapply(parts, `[`, character(1), 1L)
+    out$season <- vapply(parts, `[`, character(1), 2L)
+  }
+  out[order(-out$estimate), ]
 }
