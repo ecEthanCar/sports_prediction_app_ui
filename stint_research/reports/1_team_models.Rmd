@@ -1,0 +1,106 @@
+---
+title: "Stage 1: Shot Volume, Shot Quality, and Big Chances"
+output: html_document
+---
+
+Results come from the pipeline (`targets::tar_make()` in the project root);
+this report only reads and displays them. See `README.md` for the reasoning
+behind each choice.
+
+```{r setup, include = FALSE}
+# Run from the project root whether knit by tar_make() or by the Knit button
+root <- normalizePath(if (file.exists("_targets.R")) "." else "..")
+knitr::opts_knit$set(root.dir = root)
+knitr::opts_chunk$set(message = FALSE, warning = FALSE)
+```
+
+```{r libraries}
+library(targets)
+library(dplyr)
+library(ggplot2)
+tar_source()
+```
+
+```{r read}
+matches <- tar_read(matches)
+shots_all <- tar_read(shots_all)
+shots <- tar_read(shots)
+team_match <- tar_read(team_match)
+stage1 <- tar_read(stage1)
+```
+
+## 1. Data
+
+```{r data}
+cat(sprintf("Matches: %d | All shots: %d | Open-play shots: %d\n",
+            nrow(matches), nrow(shots_all), nrow(shots)))
+show_table(as.data.frame(table(League = matches$league), responseName = "Matches"))
+```
+
+## 2. Why only open-play shots
+
+StatsBomb's xG is calibrated for open-play shots but underrates direct set-piece
+shots, so those are excluded (penalties were excluded in the Understat work too).
+
+```{r calibration-by-type}
+show_table(xg_calibration_by_type(shots_all))
+```
+
+## 3. Team-match table
+
+```{r team-match}
+cat(sprintf("Team-match rows: %d | Zero-shot rows: %d\n",
+            nrow(team_match), sum(team_match$n_shots == 0)))
+show_table(as.data.frame(team_match)[, c("league", "n_shots", "npxg")] |>
+             group_by(league) |>
+             summarise(team_matches = n(), mean_shots = round(mean(n_shots), 2),
+                       mean_xg = round(mean(npxg), 2), .groups = "drop"))
+```
+
+## 4. Summary against the Understat results
+
+```{r summary}
+show_table(build_summary_table(stage1))
+```
+
+## 5. Why volume and quality are modelled separately
+
+If team xG followed a single Tweedie distribution, these five estimates of its
+index would agree.
+
+```{r p-compare, fig.width = 8, fig.height = 4}
+plot_p_compare(stage1)
+show_table(p_compare_table(stage1))
+```
+
+## 6. Shot quality: structure and stability
+
+```{r shape, fig.width = 8, fig.height = 5}
+plot_shape(shots, stage1)
+show_table(shape_table(shots, stage1))
+show_table(stage1$mixture$fit_table)
+```
+
+What each component is, and whether StatsBomb's xG is calibrated within it.
+The top component defines a big chance.
+
+```{r components}
+show_table(component_profile(shots))
+```
+
+The mixture refit within each league and within two random halves of the
+matches. Leagues should reproduce the pooled structure; halves can disagree
+because smaller samples cannot always separate it, which is why the mixture is
+fit once on the pooled data.
+
+```{r stability}
+show_table(tar_read(stability_league))
+show_table(tar_read(stability_half))
+```
+
+## 7. Calibration of the two-part model
+
+```{r calibration, fig.width = 6, fig.height = 6}
+plot_calibration(team_match, stage1$pred_nbg, stage1$cal_nbg)
+show_table(calibration_table(team_match, stage1$pred_nbg))
+```

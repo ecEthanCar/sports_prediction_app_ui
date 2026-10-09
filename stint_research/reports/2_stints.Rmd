@@ -1,0 +1,102 @@
+---
+title: "Stage 2: Stints, Segments, and Identification"
+output: html_document
+---
+
+Results come from the pipeline (`targets::tar_make()` in the project root);
+this report only reads and displays them. A stint is a stretch of play with the
+same players on the pitch; a segment is a stint split further at goals and
+15-minute clock edges. The identification diagnostics use the shot-volume
+model; volume, xG, and big chances share the same design, so collinearity is
+identical across them.
+
+```{r setup, include = FALSE}
+# Run from the project root whether knit by tar_make() or by the Knit button
+root <- normalizePath(if (file.exists("_targets.R")) "." else "..")
+knitr::opts_knit$set(root.dir = root)
+knitr::opts_chunk$set(message = FALSE, warning = FALSE)
+```
+
+```{r libraries}
+library(targets)
+library(dplyr)
+library(ggplot2)
+tar_source()
+```
+
+```{r read}
+stints <- tar_read(stints)
+stint_table <- tar_read(stint_table)
+segment_table <- tar_read(segment_table)
+player_mins <- tar_read(player_mins)
+overlap <- tar_read(overlap)
+```
+
+## 1. Stints
+
+Building the stint and segment tables checks that every open-play shot is
+counted once and that both reproduce the stage 1 team-match table exactly.
+
+```{r stints}
+show_table(stint_overview(stints, stint_table))
+show_table(stint_table |>
+  group_by(league) |>
+  summarise(stint_rows = n(),
+            median_minutes = round(median(minutes), 1),
+            shots_per_90 = round(90 * sum(n_shots) / sum(minutes), 2),
+            xg_per_90 = round(90 * sum(xg) / sum(minutes), 3),
+            big_chances_per_90 = round(90 * sum(big_chances) / sum(minutes), 3),
+            .groups = "drop"))
+```
+
+## 2. Segments
+
+```{r segments}
+cat(sprintf("Segments: %d\n", nrow(tar_read(segments))))
+show_table(segment_table |>
+  group_by(time_bin) |>
+  summarise(segment_rows = n(), minutes = round(sum(minutes)),
+            shots_per_90 = round(90 * sum(n_shots) / sum(minutes), 2), .groups = "drop"))
+```
+
+## 3. How minutes are distributed
+
+```{r minutes}
+show_table(minutes_table(player_mins))
+```
+
+Goalkeepers get defensive effects but no offensive ones.
+
+```{r goalkeepers}
+show_table(goalkeeper_table(stint_table, player_mins))
+```
+
+## 4. Teammate overlap
+
+Outfield players with at least `r IDENT_DEFAULT_THRESHOLD` minutes. Overlap is
+the share of the lower-minute player's time spent on the pitch with the other.
+
+```{r overlap, fig.width = 7, fig.height = 4}
+plot_overlap(overlap)
+show_table(overlap_summary(overlap))
+show_table(top_overlap_pairs(overlap, player_mins))
+```
+
+## 5. Design conditioning and precision
+
+Standard errors a Poisson shot-volume model could achieve without shrinkage, as
+a percentage change in shots per 90, against the spread of team attack effects.
+
+```{r precision}
+show_table(precision_table(tar_read(precision)))
+```
+
+## 6. Shrinkage and threshold choice
+
+Effective df is the number of player parameters the data can support at each
+prior SD; where the posterior SD is close to the prior SD, the data adds little.
+
+```{r ridge}
+show_table(tar_read(ridge))
+show_table(tar_read(thresholds))
+```

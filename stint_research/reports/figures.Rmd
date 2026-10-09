@@ -1,0 +1,151 @@
+---
+title: "Soccer Analytics: Key Figures by Stage"
+output: html_document
+---
+
+Results come from the pipeline (`targets::tar_make()` in the project root);
+this report only reads and plots them. Each figure is also saved as a PNG in
+`figures/` (in the project root) for slides. The Understat figures (stage 0)
+live in the earlier `tweedie_fit.Rmd` and `nbg_fit.Rmd`.
+
+```{r setup, include = FALSE}
+# Run from the project root whether knit by tar_make() or by the Knit button
+root <- normalizePath(if (file.exists("_targets.R")) "." else "..")
+knitr::opts_knit$set(root.dir = root)
+knitr::opts_chunk$set(message = FALSE, warning = FALSE)
+```
+
+```{r libraries}
+library(targets)
+library(dplyr)
+library(ggplot2)
+tar_source()
+```
+
+```{r read}
+team_match <- tar_read(team_match)
+stage1 <- tar_read(stage1)
+shots <- tar_read(shots)
+```
+
+# Stage 1: team level
+
+**1.1 Team attacking profiles.** Each point is a team's season. Teams reach
+their xG through volume, quality, or both.
+
+```{r fig-1-1, fig.width = 8, fig.height = 6}
+save_fig(plot_team_profiles(team_match), "1-1_team_profiles", 8, 6)
+```
+
+**1.2 Five estimates of the Tweedie index.** If team xG were a single compound
+Poisson-gamma, these would agree.
+
+```{r fig-1-2, fig.width = 8, fig.height = 4}
+save_fig(plot_p_compare(stage1), "1-2_p_compare", 8, 4)
+show_table(p_compare_table(stage1))
+```
+
+**1.3 Calibration of the two-part model.** Predicted shots x predicted quality
+against actual team-match xG; decile means on the diagonal mean calibrated.
+
+```{r fig-1-3, fig.width = 6, fig.height = 6}
+save_fig(plot_calibration(team_match, stage1$pred_nbg, stage1$cal_nbg), "1-3_calibration", 6, 6)
+```
+
+**1.4 Why only open-play shots.** Goal rate against mean xG within xG deciles.
+Direct free kicks sit above the diagonal: StatsBomb's xG underrates them.
+
+```{r fig-1-4, fig.width = 7, fig.height = 5}
+save_fig(plot_xg_reliability(tar_read(shots_all)), "1-4_xg_calibration_by_type", 7, 5)
+```
+
+# Stage 1: shot quality
+
+**1.5 Distribution of xG per shot.** The three-component mixture (solid) and its
+components (dashed).
+
+```{r fig-1-5, fig.width = 8, fig.height = 5}
+save_fig(plot_shape(shots, stage1), "1-5_shot_quality_mixture", 8, 5)
+```
+
+**1.6 Where each kind of shot comes from.** The high-value tail is close-range
+and central; the long-range cluster is outside the box.
+
+```{r fig-1-6, fig.width = 10, fig.height = 4.5}
+save_fig(plot_shot_map(shots), "1-6_shot_map_by_component", 10, 4.5)
+show_table(component_profile(shots))
+```
+
+# Stage 2: stints and identification
+
+**2.1 Stint lengths.** Short stints are common, but most minutes are played in
+long stints with the starting lineups intact, which is the source of the
+collinearity.
+
+```{r fig-2-1, fig.width = 7, fig.height = 4}
+save_fig(plot_stint_lengths(tar_read(stints)), "2-1_stint_lengths", 7, 4)
+```
+
+**2.2 Teammate overlap.** Share of the lower-minute player's time spent on the
+pitch with the other, for outfield players with 900+ minutes.
+
+```{r fig-2-2, fig.width = 7, fig.height = 4}
+save_fig(plot_overlap(tar_read(overlap)), "2-2_teammate_overlap", 7, 4)
+```
+
+**2.3 Precision of player effects.** Most players' standard errors exceed the
+entire spread of team attacking effects.
+
+```{r fig-2-3, fig.width = 8, fig.height = 4.5}
+save_fig(plot_player_se(tar_read(precision)), "2-3_player_se", 8, 4.5)
+```
+
+**2.4 Game state.** Shot rates by score and time remaining, from the segment
+table; this is why stage 3b controls for time.
+
+```{r fig-2-4, fig.width = 8, fig.height = 4.5}
+save_fig(plot_game_state(tar_read(segment_table)), "2-4_game_state", 8, 4.5)
+```
+
+# Stage 3: player models
+
+**3.1 Held-out deviance by prior SD.** Both player models dip below the
+team-only line (dotted) at small prior SDs.
+
+```{r fig-3-1, fig.width = 8, fig.height = 4}
+cv3 <- tar_read(cv3)
+save_fig(plot_cv_curve(cv3), "3-1_cv_curve", 8, 4)
+show_table(cv_table(cv3))
+```
+
+**3.2 Split-half reliability.** M3 fit separately on odd and even matches.
+
+```{r fig-3-2, fig.width = 9, fig.height = 4.5}
+save_fig(plot_split_half(tar_read(split_half3)), "3-2_split_half", 9, 4.5)
+```
+
+**3.3 Player effects by position.** Group means shift a little; individual
+spread is much larger.
+
+```{r fig-3-3, fig.width = 8, fig.height = 4.5}
+save_fig(plot_effects_by_position(tar_read(effects3), tar_read(positions)),
+         "3-3_effects_by_position", 8, 4.5)
+```
+
+# Stage 3b: time controls and positional prior
+
+**3b.1 Position effects with and without time controls.** If the filled points
+sit closer to zero than the open ones, the positional pattern was mostly
+substitution timing.
+
+```{r fig-3b-1, fig.width = 9, fig.height = 4.5}
+save_fig(plot_position_comparison(tar_read(position_fx)), "3b-1_position_effects", 9, 4.5)
+```
+
+**3b.2 Held-out deviance, including the positional prior (M4).**
+
+```{r fig-3b-2, fig.width = 8, fig.height = 4}
+cv3b <- tar_read(cv3b)
+save_fig(plot_cv_curve(cv3b), "3b-2_cv_curve", 8, 4)
+show_table(cv_table(cv3b))
+```

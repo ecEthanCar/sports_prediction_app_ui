@@ -1,0 +1,52 @@
+---
+title: "plots"
+output: html_document
+---
+
+```{r}
+library(targets); library(ggplot2); tar_source()
+md <- tar_read(md3)
+
+# M1 (controls + teams) fitted as Poisson on the stints
+X  <- cbind(md$X0, md$XT)
+b  <- fit_glm_matrix(X, md$y, md$offset, stats::poisson())
+mu <- predict_glm_matrix(b, X, md$offset)
+y  <- md$y
+disp <- sum((y - mu)^2 / mu) / (length(y) - ncol(X) - 1)
+
+# 1. How many stint rows had 0, 1, 2, ... shots: observed vs Poisson-expected
+kmax <- 6
+lev <- c(0:(kmax - 1), paste0(kmax, "+"))
+freq <- data.frame(
+  shots = factor(lev, levels = lev),
+  observed = tabulate(pmin(y, kmax) + 1, nbins = kmax + 1),
+  expected = c(sapply(0:(kmax - 1), function(k) sum(dpois(k, mu))),
+               sum(ppois(kmax - 1, mu, lower.tail = FALSE)))
+)
+p1 <- ggplot(freq, aes(x = shots)) +
+  geom_col(aes(y = observed), fill = "gray75", width = 0.7) +
+  geom_line(aes(y = expected, group = 1)) +
+  geom_point(aes(y = expected), size = 2.5) +
+  scale_y_sqrt() +
+  labs(title = "Shots per stint: observed vs Poisson-expected",
+       x = "Open-play shots by one side in a stint",
+       y = "Stint rows, square-root scale (bars = observed, points = Poisson)") +
+  plain_theme()
+
+# 2. Observed variance vs the variance Poisson implies, in 20 bins of fitted shots
+bins <- dplyr::ntile(mu, 20)
+vm <- do.call(rbind, lapply(split(seq_along(y), bins), function(i)
+  data.frame(var_pois = mean(mu[i]) + var(mu[i]), var_y = var(y[i]))))
+lim <- c(0, 1.05 * max(vm$var_pois, vm$var_y))
+p2 <- ggplot(vm, aes(x = var_pois, y = var_y)) +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
+  geom_point(size = 2.2) +
+  coord_equal(xlim = lim, ylim = lim) +
+  labs(title = sprintf("Variance vs Poisson (Pearson dispersion %.3f)", disp),
+       x = "Variance implied by Poisson", y = "Observed variance") +
+  plain_theme()
+
+save_fig(p1, "3-0_poisson_frequencies", 7, 4.5)
+save_fig(p2, "3-0_poisson_variance", 5.5, 5.5)
+
+```

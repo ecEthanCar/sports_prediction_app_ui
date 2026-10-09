@@ -1,0 +1,244 @@
+name|type|data|command|depend|seed|path|time|size|bytes|format|repository|iteration|parent|children|seconds|warnings|error
+predict_glm_matrix|function|de2a4d823473c9ed
+player_effects|function|029348e146c8279e
+best_mixture_k|function|a5a09a80e551b7fa
+estimability|function|3e6bff7d636701cb
+DATA_DIR|object|07b7729b1e7f2b64
+fit_elasticities|function|72cda0d50522ba25
+PRIOR_SD_GRID|object|64f15da1cc49d854
+available_models|function|28853f92f1fe1663
+plain_theme|function|d70ef6e107fb24dd
+stint_length_shares|function|81010a02cfe84aa2
+model_matrix|function|f6cbce348b7c9e86
+mixture_start|function|e1ce1bcd4e4b39a9
+TWEEDIE_CONTROL|object|d244489a755a1d29
+model_rhs|function|d63e3c5c2275c30a
+DISPERSION_THRESHOLD|object|3be72db5dfa9d0c0
+fmt|function|30b37d06222eff3a
+STINT_AWAY_COLS|object|3b0e73c212c8f182
+STINT_HOME_COLS|object|c65273d31f86d4b0
+row_players|function|fdebb87e32504801
+coef_at|function|95904852a103d999
+pct|function|3f7dff88e539f060
+heldout_deviance|function|cff1684f5b3fad52
+fixed_design|function|f8a94485d44b9916
+contr_sum_within|function|974217c3c70baa23
+long_players|function|5f4e6eac283413f2
+n_cores|object|ec4f2cdc06cb2c22
+IDENT_DEFAULT_THRESHOLD|object|e8d952641402fcc3
+incidence|function|a1e12b20a10033fb
+p_from_shape|function|7d6fdc949c4efc2d
+GROUP_ORDER|object|75bdd2e70a109f12
+MODEL_DESCRIPTIONS|object|73d04fc8345a1c17
+TIME_BINS|object|1aa426b8d679118e
+IDENT_THRESHOLDS|object|3f50bd5a89f1fae1
+fisher_info|function|7751460120da5944
+tau_to_lambda|function|48a512e57df9af45
+COMPONENT_LABELS|object|d302043e1ce5f8ed
+show_table|function|725032d934df94d0
+reliability_table|function|bb4f6f1b6820d61e
+best_tau|function|efb783be696088e2
+add_game_state|function|4353df39666baa1b
+FOLD_SEED|object|be7158fb2a3aa7d6
+default_workers|object|50003b5d5254d75e
+position_effects_table|function|b3489aa15a1bd7dd
+recombine_nbg|function|bc5d3c3d6c6bddf6
+shot_col_types|function|487a2d2db44ce704
+run_em|function|13054dc7e8bcca7d
+shape_stats|function|ce88f41c6e85c9c2
+EXPECTED_TEAMS|object|d290306a6450b2e2
+component_profile|function|e317bd25281ba1a2
+workers|object|50003b5d5254d75e
+fold_deviance|function|511fb0cf4f561c0e
+UNDERSTAT_REF|object|e6a32cdc6f217448
+N_FOLDS|object|d516855f98da7f3d
+calibration_stats|function|39b21e2777280552
+find_python|function|475d348707476b9c
+EXPECTED_MATCHES|object|480f45fcadf45a1c
+RIDGE_PRIOR_SD|object|f1618cb621c568fd
+FIG_DIR|object|c365d7a219b68f82
+team_profiles|function|e9d8808e4d7b6dd9
+top_overlap_pairs|function|8d53cf4beb36e377
+tweedie_power|function|911b88918cdd76f0
+position_group|function|279b50a919a4e3ea
+xg_reliability|function|0f3fc80b2d674e45
+MATCH_MINUTES_RANGE|object|53a03865d30ea71e
+tweedie_fitted|function|e42c5e41412743e6
+RAW_FILES|object|0ff47aed7c2a888b
+fit_glm_matrix|function|c4dfa860d363c276
+predict_penalized|function|6dc35277eff35c62
+xg_calibration_by_type|function|79ba0b85af1910ad
+match_halves|function|7b9bf46d52f1f129
+raw_file|function|6aa2ea0803a79828
+best_mixture_components|function|dbacabc895ae6242
+big_chance_prob|function|47f82219e0ce0398
+assign_components|function|f57c4b0443274ee8
+load_players|function|cf795efe04c83366
+combine_cv|function|bd925994146d316b
+plot_calibration|function|43cf38a611bd12ed
+plot_overlap|function|b091eb669f094d02
+plot_stint_lengths|function|9f38a5dc92412011
+fit_tweedie|function|c14ee38014120af0
+fit_volume|function|83131e3cbc7c6e23
+fit_quality|function|105efa1a8beb7175
+family_table|function|ceead737d68b94cd
+stint_overview|function|e2a516393f6f63e2
+overlap_summary|function|438c7d06a99eb090
+calibration_table|function|5158eac6e095258f
+stint_col_types|function|ddfa6dd2469085e7
+build_stint_table|function|c90b330c87053eae
+top_players_table|function|0ede2351edae1ed2
+position_comparison_table|function|c2770519bad498c6
+precision_table|function|a521d84b5864991c
+effects_spread_table|function|f2cd347c564f74df
+plot_player_se|function|83c19c7eea62d9c7
+plot_split_half|function|13b8409f28a445a9
+team_design|function|7c06a8c7c2f56a34
+build_team_match|function|e6666d5fd556ef65
+position_counts|function|36241802bfe0d19a
+player_minutes|function|6a406d36d1d68606
+goalkeeper_table|function|ee8a8a824f0b88f0
+teammate_overlap|function|e16dca747cca679b
+player_design|function|267b5a39d5bcff94
+p_estimates|function|9040345c50286036
+plot_position_comparison|function|7342b337c633c9ae
+plot_effects_by_position|function|af286f6c3563c5cd
+plot_cv_curve|function|f1c513dde3654264
+game_state_rates|function|ece2ff0e1dc28e76
+minutes_table|function|ee8e58e2fff51a79
+fit_penalized|function|963e3d11884dee60
+plot_shot_map|function|2297b062820da6d0
+load_shots|function|eee09e4e11fe7abc
+fit_xg_mixture|function|0c14192e027f0844
+cv_table|function|bd64bdf73cffdc91
+match_folds|function|297d7206461f4cec
+validate_matches|function|be2e1d67e0068c51
+save_fig|function|122cc6d5fb89276a
+plot_team_profiles|function|b96d58f430f41417
+player_positions|function|daf4e8f5c8f6d6b1
+plot_xg_reliability|function|8f5f563df3ff61dd
+validate_stints|function|51c2b3871050a4d2
+run_build|function|fca0ec494b43b5f6
+choose_family|function|67f2e243b1a3d38b
+plot_shape|function|04e6a031e56760f4
+build_summary_table|function|05fabf45bcd07a07
+shape_table|function|7106236ffb396820
+team_attack_sd|function|2b971fb5c8194c2c
+team_sanity|function|549ce85c9c953769
+assemble_models|function|258f6585ba9dca09
+segment_col_types|function|93b0a7b3ab3be42a
+threshold_table|function|605669d1df4bcd6d
+player_model_data|function|dbcdd3726087f241
+ridge_table|function|a9c1fa2ef1608530
+plot_p_compare|function|2f82d6646eda160e
+p_compare_table|function|ad54d45093935176
+plot_game_state|function|5b7e8e967c47ce0b
+split_half_effects|function|0d6b5533052e6b0b
+cv_one_fold|function|f96ff2eccbdff9c5
+position_coefs|function|b51d7111c1f7ac3e
+fit_final|function|e9c24a08c8823e80
+mixture_by_group|function|198340fcc678f6e4
+load_matches|function|4f43b1be84ba7b50
+load_stints|function|fe9b8567e1144ab9
+precision_data|function|28bba5fa909d5ab3
+run_models|function|3d2fd27e10f294da
+load_segments|function|aba3d2e95065aeff
+split_half_reliability|function|a703861ae5543e5e
+cv_models|function|b20d7f58435a24f9
+position_effects|function|6366c39df91fac7d
+fold_ids|stem|51a9139b2f7a3780|89ab2c96514b1df8|0ff7285196d60cf2|809495579||t20735.7043234308s|s99b|99|rds|local|vector||fold_ids_6e95f3b2b5476d92*fold_ids_b3a2147ad240fae3*fold_ids_f5968f8186dadba0*fold_ids_50003b5d5254d75e*fold_ids_5105e1ee401f4beb*fold_ids_943cd151fa74649e*fold_ids_a7098e9b959e7c27*fold_ids_3a45cb041330bd5a*fold_ids_0c0522beb9e90953*fold_ids_4b8caeb2425c3113|1.04||
+build_script|stem|2a1a528c46de4c1f|f48b55defa2b2719|2c530c1562a7fbd1|-1085983542|build/build_shots.py|t20735.6937037037s|s26086b|26086|file|local|vector|||1.068||
+raw_files|stem|123b6228301c9ec3|ec771c99419dc7cd|30404b76b7dcda60|1129559970|data/raw/matches_1516.csv*data/raw/shots_1516.csv*data/raw/stints_1516.csv*data/raw/segments_1516.csv*data/raw/players_1516.csv|t20735.7043733956s|s34577921b|34577921|file|local|vector|||3.68||
+players|stem|3625c122998c8bfc|f425c7a30697f05f|c4f36c9dc53c2c02|1720822455||t20735.7043762185s|s38202b|38202|rds|local|vector|||0.132||
+matches|stem|b897665dab3836e2|b70ea4bfac1b93e2|dae48b08c4f4c51b|292580782||t20735.7043763562s|s16769b|16769|rds|local|vector|||0.15|Leagues with fewer than 380 matches: Ligue 1 = 377. Team-match counts for these teams will be unequal.|
+positions|stem|71ee4da11a0ef61c|0d57d936a6bf72d6|cc2a1a15cbf8eea7|920315248||t20735.7043768599s|s12483b|12483|rds|local|vector|||0.033||
+shots_open|stem|25fae769b341fea2|e3bc5377042ed161|36f1287fbc5c0385|-786839064||t20735.7043846949s|s3088752b|3088752|rds|local|vector|||0.171||
+shots_all|stem|9298d5b3b0ce93f6|e95145eccd058823|36f1287fbc5c0385|1020505995||t20735.7043848425s|s3250141b|3250141|rds|local|vector|||0.192||
+stints|stem|6db134d60cbb9de4|bf08e80236e05276|6af568eb67877288|1208405578||t20735.704396182s|s359310b|359310|rds|local|vector|||0.1|2 matches have total stint minutes outside 88 to 105: 3829452 = 105.6, 3901214 = 105.5|
+segments|stem|2ff367bddcb1901c|1129ad91691fd639|98daa1c961556c97|-739518102||t20735.7043982736s|s530037b|530037|rds|local|vector|||0.065|2 matches have total stint minutes outside 88 to 105: 3829452 = 105.6, 3901214 = 105.5|
+team_match|stem|5a1d6a3910cb47b4|7c4d47a7efbba780|9e770263e075909f|525669153||t20735.7044055853s|s126599b|126599|rds|local|vector|||0.075||
+tweedie|stem|3ab86f14b780a977|c12c98f77f5937d5|9d4f895ac55c12c4|299669535||t20735.7044213199s|s1262515b|1262515|rds|local|vector|||1.211||
+stability_league|stem|7392e0fcbcc2488a|b0f773838918b17c|057b4e040dbb912b|-1362703187||t20735.7050989622s|s507b|507|rds|local|vector|||61.476||
+mixture|stem|2cccb1cf9b32ba4a|49e338fa05d527b8|1aa76bb5242614a6|1644656692||t20735.7051448149s|s1831822b|1831822|rds|local|vector|||64.199||
+stability_half|stem|dd57fd6dbff7d194|e555dec1b4e2b5d1|10426a4d7dd5287c|1988595950||t20735.7051499105s|s348b|348|rds|local|vector|||65.872||
+shots|stem|de86e437cdaf67c2|29ab137b3fcd2b58|1210750900ff2cf8|1468644445||t20735.7051540096s|s3369705b|3369705|rds|local|vector|||0.005||
+stint_table|stem|84d7cd530b0b9a30|da0a7e59e29ad76d|c33f4f3f07d8aab8|-2089934373||t20735.7051617343s|s604355b|604355|rds|local|vector|||0.344||
+player_mins|stem|c20e3b72a4399553|baa32e2c2a900765|a45b35fa872d45ad|594268738||t20735.7051636857s|s49218b|49218|rds|local|vector|||0.117||
+segment_table|stem|e60fb6db97a2a343|e29ad752dc48861d|70641ca8049100b3|1502941032||t20735.7051644009s|s884363b|884363|rds|local|vector|||0.486||
+seg_mins|stem|02eab78a2ce597bf|313b9c95158f6929|c628563bd2f9a4d9|111360913||t20735.7051671032s|s49337b|49337|rds|local|vector|||0.146||
+stage1|stem|48c50932cecdd266|86d29cece833b1b8|da05c0f48bcd6d29|1461671363||t20735.7051800851s|s25276055b|25276055|rds|local|vector|||1.665||
+md3b|stem|7066c7497e964dad|5823d7a36a09e2e9|756c1c6bebde8789|1677712190||t20735.7051823973s|s3085254b|3085254|rds|local|vector|||0.666||
+report_team|stem|638f1c34b2087fa6|f92f587c910a04f8|751df12826c98bd9|-1040999927|reports/1_team_models.html*reports/1_team_models.Rmd|t20735.7052178251s|s1295568b|1295568|file|local|vector|||2.515||
+fam3b|stem|cd4bac36d7295d00|a47d84ffa48c147f|f761a93b7e741343|17284774||t20735.7052550376s|s1046b|1046|rds|local|vector|||6.125|iteration limit reached|
+sanity3b|stem|044183e4850403a0|7342a8c42cff91a3|837fb05eab914c11|-71392666||t20735.7053190874s|s204b|204|rds|local|vector|||5.477||
+md3|stem|19aab050ac5f523c|50bba1de313faf81|a41afb2a42144ba4|1778204822||t20735.7053235014s|s1221795b|1221795|rds|local|vector|||0.121||
+folds3|stem|a6dbbd20b8e20990|3fc403294781affa|54509dda50f9b818|-1122640322||t20735.705323886s|s2619b|2619|rds|local|vector|||0||
+overlap|stem|42c356b64d7dcbb7|03b06b63f6952a5c|3544dd373901f719|669531933||t20735.7053253587s|s147694b|147694|rds|local|vector|||0.074||
+md3b_score|stem|ce0d9da393132e68|03fd79626491430c|756c1c6bebde8789|-1802378917||t20735.7053387429s|s3070287b|3070287|rds|local|vector|||0.54||
+folds3b|stem|0a4ceafafd13460c|60540f20670fbbfb|b652628ac1f2dfea|301208920||t20735.705339392s|s3260b|3260|rds|local|vector|||0.001||
+precision|stem|df8952aad29aee78|a9a36c0261abc7b9|caaf9585d9205f86|2029408054||t20735.7054200656s|s20770b|20770|rds|local|vector|||22.09||
+fam3|stem|4ee8c3ac0d990e41|29b16d8f73d4782c|2823e7de834bc1c0|1174577580||t20735.7054471021s|s2268b|2268|rds|local|vector|||2.278||
+sanity3|stem|d8c6b29b3a5058a1|bad563c61198f14b|411a577ca3bea09d|-1755326691||t20735.7054837764s|s203b|203|rds|local|vector|||3.13||
+ridge|stem|edf023bd79ce8fc3|16f9db15537baed7|eb85147a6a8016bd|113155875||t20735.7055951631s|s311b|311|rds|local|vector|||37.23||
+thresholds|stem|b6bd2aef1685d98c|c71ceaa7ffade0a8|6d93d13ca770a7bc|1391322145||t20735.7060132129s|s334b|334|rds|local|vector|||68.654||
+report_stints|stem|1a1c0da4179797c8|1b427125913064bd|6d90bbe98a5e2f7d|804336226|reports/2_stints.html*reports/2_stints.Rmd|t20735.7060285725s|s728230b|728230|file|local|vector|||1.143||
+cv3b_fold_d9e5b757a7c6d6a2|branch|6f90d711ed36a9a5|4cd6d1e83f88c091|d2dcf900c866e65d|-1852507069||t20735.7064222455s|s698b|698|rds|local|list|cv3b_fold||93.465|glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge|
+cv3b_fold_94d60c083aed89cc|branch|cad0f0de8407c484|4cd6d1e83f88c091|d2dcf900c866e65d|-1647464494||t20735.7065368266s|s698b|698|rds|local|list|cv3b_fold||90.899|glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge|
+cv3b_fold_50a296c5b007ea22|branch|17739e2dc687275b|4cd6d1e83f88c091|d2dcf900c866e65d|1164054257||t20735.7066789909s|s695b|695|rds|local|list|cv3b_fold||93.393|glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge|
+cv3b_fold_8200363284db4442|branch|e7551b4d52c66b78|4cd6d1e83f88c091|d2dcf900c866e65d|1286260831||t20735.707121541s|s696b|696|rds|local|list|cv3b_fold||94.068|glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge|
+cv3b_fold_5c996f6d79f2c229|branch|206ca5e32b5b3f20|4cd6d1e83f88c091|d2dcf900c866e65d|-1955597691||t20735.7075051759s|s699b|699|rds|local|list|cv3b_fold||93.482|glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge|
+cv3b_fold_9f5f7924f9f0475a|branch|08b012e8d20cd381|4cd6d1e83f88c091|d2dcf900c866e65d|-1512083038||t20735.70761764s|s695b|695|rds|local|list|cv3b_fold||93.305|glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge|
+cv3b_fold_64fb73ddf344d60b|branch|ed077b98ccc6a1e1|4cd6d1e83f88c091|d2dcf900c866e65d|627673872||t20735.7077638859s|s692b|692|rds|local|list|cv3b_fold||93.633|glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge|
+cv3_fold_d9e5b757a7c6d6a2|branch|6e310f37fe0dd331|3d473dfd34a04096|9c659aea29c0a14e|738513828||t20735.707806741s|s546b|546|rds|local|list|cv3_fold||3.616||
+cv3_fold_94d60c083aed89cc|branch|c10c11732df7cd00|3d473dfd34a04096|9c659aea29c0a14e|-991776776||t20735.707850309s|s547b|547|rds|local|list|cv3_fold||3.717||
+cv3_fold_50a296c5b007ea22|branch|3a05ae2754739aa8|3d473dfd34a04096|9c659aea29c0a14e|-1986340071||t20735.7078951392s|s547b|547|rds|local|list|cv3_fold||3.797||
+cv3_fold_8200363284db4442|branch|2ffdab71e9a9bba3|3d473dfd34a04096|9c659aea29c0a14e|783871541||t20735.7079401914s|s543b|543|rds|local|list|cv3_fold||3.827||
+cv3_fold_5c996f6d79f2c229|branch|2231289fc37ef0a1|3d473dfd34a04096|9c659aea29c0a14e|702565252||t20735.7079823644s|s549b|549|rds|local|list|cv3_fold||3.581||
+cv3_fold_9f5f7924f9f0475a|branch|ca7f42469f914f81|3d473dfd34a04096|9c659aea29c0a14e|-1724454128||t20735.7080292817s|s542b|542|rds|local|list|cv3_fold||3.782||
+cv3_fold_64fb73ddf344d60b|branch|8a936633368a7001|3d473dfd34a04096|9c659aea29c0a14e|1050374573||t20735.7080729566s|s544b|544|rds|local|list|cv3_fold||3.736||
+cv3_fold_42242e85655fa260|branch|7bde8905b5b67caa|3d473dfd34a04096|9c659aea29c0a14e|-953543816||t20735.7081143711s|s545b|545|rds|local|list|cv3_fold||3.541||
+cv3_fold_d42c1cd610de70fd|branch|0bd66c0a8f977a8a|3d473dfd34a04096|9c659aea29c0a14e|-849162886||t20735.7081570405s|s544b|544|rds|local|list|cv3_fold||3.648||
+cv3_fold_cdb75ad719ab9129|branch|8298d8c9af3eb60e|3d473dfd34a04096|9c659aea29c0a14e|1315603302||t20735.7081975447s|s544b|544|rds|local|list|cv3_fold||3.46||
+cv3_fold|pattern|1e6ad9807750a2da|3d473dfd34a04096||-361895578||||5451|rds|local|list||cv3_fold_d9e5b757a7c6d6a2*cv3_fold_94d60c083aed89cc*cv3_fold_50a296c5b007ea22*cv3_fold_8200363284db4442*cv3_fold_5c996f6d79f2c229*cv3_fold_9f5f7924f9f0475a*cv3_fold_64fb73ddf344d60b*cv3_fold_42242e85655fa260*cv3_fold_d42c1cd610de70fd*cv3_fold_cdb75ad719ab9129|36.705||
+cv3|stem|abf55d1bed31753a|a905b915e322e8be|ab851bd98aa773bf|-2144804864||t20735.7081978698s|s3800b|3800|rds|local|vector|||0.005||
+tau3|stem|3029111c23c61e66|bbdc74f0f195530a|b7d522f1f3e821fd|-636655216||t20735.7081980398s|s55b|55|rds|local|vector|||0||
+split_half3|stem|ffc7bc57177c1d19|68fa01b30abebb2c|e5ef7b7fd398bc3c|1843564022||t20735.7082131952s|s68425b|68425|rds|local|vector|||1.277||
+cv3b_fold_42242e85655fa260|branch|cc40dcfa3eb0f1ab|4cd6d1e83f88c091|d2dcf900c866e65d|-2025567630||t20735.7082136019s|s706b|706|rds|local|list|cv3b_fold||93.919|glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge|
+coef3|stem|e0e03e1ce0fe36fd|e94a5016909f3a2d|70cb8aff53039720|-280772090||t20735.7082265841s|s31296b|31296|rds|local|vector|||1.116||
+effects3|stem|95b6786c878cd22b|ee1fd1d763874a0e|69dc4f9b55e17211|-988971472||t20735.7082270194s|s53973b|53973|rds|local|vector|||0.005||
+report_players|stem|e8c6240f57a2b563|5e1fca29f18151e7|52ac84f49f326cfc|408046022|reports/3_players.html*reports/3_players.Rmd|t20735.7082404798s|s792772b|792772|file|local|vector|||1.158||
+cv3b_fold_d42c1cd610de70fd|branch|99f479994ea964f6|4cd6d1e83f88c091|d2dcf900c866e65d|-270874716||t20735.7086088353s|s694b|694|rds|local|list|cv3b_fold||94.9|glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge|
+cv3b_fold_cdb75ad719ab9129|branch|1b1e52775d064793|4cd6d1e83f88c091|d2dcf900c866e65d|699502540||t20735.7087032915s|s700b|700|rds|local|list|cv3b_fold||93.676|glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge|
+cv3b_fold|pattern|1af43e60cf1bc742|4cd6d1e83f88c091||2012402010||||6973|rds|local|list||cv3b_fold_d9e5b757a7c6d6a2*cv3b_fold_94d60c083aed89cc*cv3b_fold_50a296c5b007ea22*cv3b_fold_8200363284db4442*cv3b_fold_5c996f6d79f2c229*cv3b_fold_9f5f7924f9f0475a*cv3b_fold_64fb73ddf344d60b*cv3b_fold_42242e85655fa260*cv3b_fold_d42c1cd610de70fd*cv3b_fold_cdb75ad719ab9129|934.74||
+cv3b|stem|8964ae10c33dfd5a|9d2061a56c59a72d|433abf574ea20078|1959267266||t20735.7087039275s|s5232b|5232|rds|local|vector|||0.012||
+tau3b_m3|stem|88f0e2da82fe92dc|16ff4aba2d7df63d|6ac2cf008395f694|320062228||t20735.7087041608s|s55b|55|rds|local|vector|||0||
+tau3b_m4|stem|88f0e2da82fe92dc|46c5a8e6009dca53|6ac2cf008395f694|1789536277||t20735.7087042164s|s55b|55|rds|local|vector|||0.001||
+pos_time_jk_94d60c083aed89cc|branch|12535a1879864ba0|53feab3aa46d0b56|cd11631b72309923|265470172||t20735.7091414407s|s170b|170|rds|local|list|pos_time_jk||37.392|glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge|
+pos_time_jk_d9e5b757a7c6d6a2|branch|a51c783f7bf7c6a2|53feab3aa46d0b56|cd11631b72309923|977269592||t20735.7091642194s|s171b|171|rds|local|list|pos_time_jk||39.447|glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge|
+split_half3b_m3|stem|ac7f24d5beed612f|61dacee89833ecdf|823482678a0949f4|2034651677||t20735.7091745393s|s68676b|68676|rds|local|vector|||40.443|glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge|
+pos_time_full|stem|dec94dc487843e61|235a1ee3c56c508c|ffb1256cded1af49|999299847||t20735.7092019128s|s170b|170|rds|local|vector|||42.813|glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge|
+pos_time_jk_50a296c5b007ea22|branch|1169cd4c0ae1babb|53feab3aa46d0b56|cd11631b72309923|335977204||t20735.7095495785s|s171b|171|rds|local|list|pos_time_jk||35.171|glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge|
+pos_time_jk_5c996f6d79f2c229|branch|9b158344ceaac065|53feab3aa46d0b56|cd11631b72309923|-195449708||t20735.7095878207s|s170b|170|rds|local|list|pos_time_jk||35.574|glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge|
+pos_time_jk_8200363284db4442|branch|284de7ef18aa3b0e|53feab3aa46d0b56|cd11631b72309923|-1007299986||t20735.7095925586s|s169b|169|rds|local|list|pos_time_jk||36.9|glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge|
+pos_time_jk_9f5f7924f9f0475a|branch|5513a2a9f3a56224|53feab3aa46d0b56|cd11631b72309923|1864729198||t20735.709610236s|s171b|171|rds|local|list|pos_time_jk||35.09|glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge|
+pos_time_jk_64fb73ddf344d60b|branch|7b8094956a6a57b3|53feab3aa46d0b56|cd11631b72309923|-1692361243||t20735.7099554275s|s171b|171|rds|local|list|pos_time_jk||34.981|glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge|
+pos_time_jk_42242e85655fa260|branch|c5cfe6cff3fc00ae|53feab3aa46d0b56|cd11631b72309923|-1055553365||t20735.7099939405s|s170b|170|rds|local|list|pos_time_jk||35.001|glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge|
+pos_time_jk_d42c1cd610de70fd|branch|7e77f9aea87d0a92|53feab3aa46d0b56|cd11631b72309923|-407460193||t20735.7100061797s|s170b|170|rds|local|list|pos_time_jk||35.633|glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge|
+pos_time_jk_cdb75ad719ab9129|branch|b8d8e91a03a50476|53feab3aa46d0b56|cd11631b72309923|1790389434||t20735.7100114196s|s170b|170|rds|local|list|pos_time_jk||34.531|glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge|
+pos_time_jk|pattern|4f6ac1e388b129ba|53feab3aa46d0b56||1753021818||||1703|rds|local|list||pos_time_jk_d9e5b757a7c6d6a2*pos_time_jk_94d60c083aed89cc*pos_time_jk_50a296c5b007ea22*pos_time_jk_8200363284db4442*pos_time_jk_5c996f6d79f2c229*pos_time_jk_9f5f7924f9f0475a*pos_time_jk_64fb73ddf344d60b*pos_time_jk_42242e85655fa260*pos_time_jk_d42c1cd610de70fd*pos_time_jk_cdb75ad719ab9129|359.72||
+split_half3b_m4|stem|5b0ae7d6492fd836|b19745f58297de8a|d00ca38d8b45f2f6|-506869205||t20735.7104562714s|s68719b|68719|rds|local|vector|||43.201|glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge|
+pos_score_jk_d9e5b757a7c6d6a2|branch|afc3ef585f4a25bb|3b67988b0fa4c45b|fc39e3a5d94c1890|-1212875972||t20735.7104648717s|s170b|170|rds|local|list|pos_score_jk||39.355|glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge|
+pos_score_jk_94d60c083aed89cc|branch|bb57a5a2c41b449c|3b67988b0fa4c45b|fc39e3a5d94c1890|-1747019592||t20735.7104681426s|s171b|171|rds|local|list|pos_score_jk||39.371|glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge|
+pos_score_full|stem|758ab0845ed5978f|a533af3a3580bbc7|6b762e0ba8c3ed66|198039290||t20735.7105178745s|s170b|170|rds|local|vector|||45.193|glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge|
+pos_score_jk_50a296c5b007ea22|branch|11efc04b5c5f2378|3b67988b0fa4c45b|fc39e3a5d94c1890|2053811851||t20735.7109168993s|s171b|171|rds|local|list|pos_score_jk||39.669|glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge|
+pos_score_jk_5c996f6d79f2c229|branch|d9dad03a91670b2b|3b67988b0fa4c45b|fc39e3a5d94c1890|-965569042||t20735.7109310585s|s171b|171|rds|local|list|pos_score_jk||39.877|glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge|
+pos_score_jk_8200363284db4442|branch|c42b3c5d56bb570a|3b67988b0fa4c45b|fc39e3a5d94c1890|-972568697||t20735.7109313269s|s171b|171|rds|local|list|pos_score_jk||40.208|glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge|
+pos_score_jk_9f5f7924f9f0475a|branch|709d0debbfe5d941|3b67988b0fa4c45b|fc39e3a5d94c1890|996658940||t20735.7109769471s|s171b|171|rds|local|list|pos_score_jk||39.545|glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge|
+pos_score_jk_64fb73ddf344d60b|branch|9d1209e720f722c8|3b67988b0fa4c45b|fc39e3a5d94c1890|-1116860151||t20735.7113910667s|s171b|171|rds|local|list|pos_score_jk||40.897|glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge|
+pos_score_jk_42242e85655fa260|branch|eb831c9b1c2e6043|3b67988b0fa4c45b|fc39e3a5d94c1890|-1912641895||t20735.7113958634s|s171b|171|rds|local|list|pos_score_jk||40.086|glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge|
+pos_score_jk_d42c1cd610de70fd|branch|997973056f872a04|3b67988b0fa4c45b|fc39e3a5d94c1890|-795738965||t20735.711400627s|s170b|170|rds|local|list|pos_score_jk||40.451|glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge|
+pos_score_jk_cdb75ad719ab9129|branch|f3aa9aa31026ce91|3b67988b0fa4c45b|fc39e3a5d94c1890|1674483591||t20735.7114289274s|s170b|170|rds|local|list|pos_score_jk||38.961|glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge. glmnet.fit: algorithm did not converge|
+pos_score_jk|pattern|b4711ccb3ece830c|3b67988b0fa4c45b||-1863551285||||1707|rds|local|list||pos_score_jk_d9e5b757a7c6d6a2*pos_score_jk_94d60c083aed89cc*pos_score_jk_50a296c5b007ea22*pos_score_jk_8200363284db4442*pos_score_jk_5c996f6d79f2c229*pos_score_jk_9f5f7924f9f0475a*pos_score_jk_64fb73ddf344d60b*pos_score_jk_42242e85655fa260*pos_score_jk_d42c1cd610de70fd*pos_score_jk_cdb75ad719ab9129|398.42||
+position_fx|stem|f59bf136d21e666c|5d5e2d63aaa02f02|c03304d10d13b453|-591240278||t20735.7114294141s|s465b|465|rds|local|vector|||0.006||
+report_positions|stem|b5db1733801a8e12|bd859253a362e108|c92b9c6d490a5e48|619304976|reports/3b_positions.html*reports/3b_positions.Rmd|t20735.7114416086s|s797027b|797027|file|local|vector|||0.971||
+report_figures|stem|46449f3ae50d183c|94a6020302a7a5fb|ec204a6a56c619c1|-2057655553|reports/figures.html*reports/figures.Rmd|t20735.7114906758s|s3330513b|3330513|file|local|vector|||4.603||

@@ -1,0 +1,72 @@
+---
+title: "Stage 3: Player Models for Shot Volume"
+output: html_document
+---
+
+Results come from the pipeline (`targets::tar_make()` in the project root);
+this report only reads and displays them. Models: M0 league, home, score and
+player counts; M1 adds teams; M2 adds players without teams; M3 adds players as
+deviations from team. Player effects are ridge-penalized.
+
+```{r setup, include = FALSE}
+# Run from the project root whether knit by tar_make() or by the Knit button
+root <- normalizePath(if (file.exists("_targets.R")) "." else "..")
+knitr::opts_knit$set(root.dir = root)
+knitr::opts_chunk$set(message = FALSE, warning = FALSE)
+```
+
+```{r libraries}
+library(targets)
+library(dplyr)
+library(ggplot2)
+tar_source()
+```
+
+```{r read}
+cv3 <- tar_read(cv3)
+effects3 <- tar_read(effects3)
+```
+
+## 1. Likelihood and sanity check
+
+The team-only model is fit as Poisson on the stints; a Pearson dispersion of
+`r DISPERSION_THRESHOLD` or more would switch to a negative binomial. Team
+attack effects at the stint level should match the stage 1 model.
+
+```{r family}
+show_table(family_table(tar_read(fam3)))
+show_table(tar_read(sanity3))
+```
+
+## 2. Do player effects predict better than teams alone?
+
+Held-out deviance on 10 folds of whole matches (lower is better). The prior SD
+is chosen on the same folds, so penalized gains are slightly optimistic.
+
+```{r cv}
+show_table(cv_table(cv3))
+```
+
+```{r cv-curve, fig.width = 7, fig.height = 4}
+plot_cv_curve(cv3)
+```
+
+## 3. Are player effects stable?
+
+M3 fit separately on alternating matches; players with 300+ minutes in each half.
+
+```{r reliability}
+show_table(reliability_table(tar_read(split_half3)))
+```
+
+## 4. Player effects (M3)
+
+Offense: higher means the team shoots more with the player on. Defense: lower
+means the team concedes fewer shots. Interpret individual rankings only if
+Section 3 shows meaningful reliability.
+
+```{r effects}
+show_table(effects_spread_table(effects3))
+show_table(top_players_table(effects3, "Offense"))
+show_table(top_players_table(effects3, "Defense"))
+```

@@ -1,0 +1,73 @@
+---
+title: "Stage 3b: Time Controls and a Positional Prior"
+output: html_document
+---
+
+Results come from the pipeline (`targets::tar_make()` in the project root);
+this report only reads and displays them. The models run on segments (exact
+score), with game state as score difference x six 15-minute bins. M4 adds
+counts of each position group on the pitch, unpenalized, so each player's
+effect is a deviation from his position's mean.
+
+```{r setup, include = FALSE}
+# Run from the project root whether knit by tar_make() or by the Knit button
+root <- normalizePath(if (file.exists("_targets.R")) "." else "..")
+knitr::opts_knit$set(root.dir = root)
+knitr::opts_chunk$set(message = FALSE, warning = FALSE)
+```
+
+```{r libraries}
+library(targets)
+library(dplyr)
+library(ggplot2)
+tar_source()
+```
+
+```{r read}
+cv3b <- tar_read(cv3b)
+positions <- tar_read(positions)
+seg_mins <- tar_read(seg_mins)
+```
+
+## 1. Data and likelihood
+
+```{r data}
+segment_table <- tar_read(segment_table)
+cat(sprintf("Segment rows: %d | Game-state cells: %d\n", nrow(segment_table),
+            nlevels(add_game_state(segment_table, "score_time")$game_state)))
+regular <- seg_mins$player_id[seg_mins$minutes >= IDENT_DEFAULT_THRESHOLD]
+show_table(as.data.frame(table(`Position group` = positions$group[positions$player_id %in% regular],
+                               useNA = "ifany"), responseName = "Players"))
+show_table(family_table(tar_read(fam3b)))
+show_table(tar_read(sanity3b))
+```
+
+## 2. Cross-validation, all models
+
+```{r cv}
+show_table(cv_table(cv3b))
+```
+
+```{r cv-curve, fig.width = 7, fig.height = 4}
+plot_cv_curve(cv3b)
+```
+
+## 3. Reliability, M3 vs M4
+
+```{r reliability}
+show_table(rbind(reliability_table(tar_read(split_half3b_m3)),
+                 reliability_table(tar_read(split_half3b_m4))))
+```
+
+## 4. Position effects, with and without time controls
+
+One more player of the group in place of a midfielder, % shots per 90, with
+delete-one-fold jackknife SEs. Offense: positive means more shots taken.
+Defense: positive means more shots conceded. Both use M4's prior SD. If the
+effects shrink once time remaining is controlled, they were mostly
+substitution timing.
+
+```{r positions}
+position_fx <- tar_read(position_fx)
+show_table(position_comparison_table(position_fx$score, position_fx$score_time))
+```
