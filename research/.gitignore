@@ -1,0 +1,7 @@
+_targets/
+data/
+reports/*.html
+reports/*_files/
+.Rhistory
+.DS_Store
+__pycache__/

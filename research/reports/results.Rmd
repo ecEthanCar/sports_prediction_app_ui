@@ -1,0 +1,124 @@
+---
+title: "Player Effects in Soccer: Results"
+output: html_document
+---
+
+Results come from the pipeline (`targets::tar_make()` in `research/`); this
+report only reads and displays them. StatsBomb open data, 2015/16, Premier
+League, La Liga, Serie A and Ligue 1, open play. Every model is fit on segments
+(stretches with the same 22 players, split at goals and 15-minute marks) and
+compared on the same 10 folds of whole matches. Gains are held-out Poisson
+deviance with fold-to-fold SEs. Reliability correlates player effects fit
+separately on alternating matches (players with 300+ minutes in each half).
+
+```{r setup, include = FALSE}
+# Run from research/ whether knit by tar_make() or by the Knit button
+root <- normalizePath(if (file.exists("_targets.R")) "." else "..")
+knitr::opts_knit$set(root.dir = root)
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+```
+
+```{r libraries}
+library(targets)
+library(dplyr)
+library(ggplot2)
+tar_source()
+```
+
+## Data and identification
+
+```{r identification}
+segment_table <- tar_read(segment_table)
+cat(sprintf("Segment rows: %s | Open-play shots: %s\n",
+            fmt(nrow(segment_table), 0), fmt(sum(segment_table$n_shots), 0)))
+show_table(overlap_summary(tar_read(overlap)))
+show_table(precision_table(tar_read(precision)))
+```
+
+## A. Shot baseline
+
+M0: league, home, score x 15-minute bin, player counts. M1: + team attack and
+defense effects. M3: + ridge-penalized player offense and defense effects.
+
+```{r baseline}
+base_cv <- tar_read(base_cv)
+base_sh <- tar_read(base_sh)
+show_table(baseline_summary(base_cv, base_sh))
+```
+
+Structured versions of M3, on the same folds. M4 adds position-group counts;
+MRoles adds their pairwise products (role interactions); MGraph adds a
+teammate-graph penalty (kappa = `r GRAPH_KAPPA`).
+
+```{r structure}
+show_table(structure_table(base_cv, base_sh, list(
+  "M4: positional prior" = list(cv = tar_read(pos_cv), model = "M4", sh = tar_read(m4_sh)),
+  "MRoles: role interactions" = list(cv = tar_read(pos_cv), model = "MRoles", sh = tar_read(roles_sh)),
+  "MGraph: teammate graph" = list(cv = tar_read(graph_cv), model = "MGraph", sh = tar_read(graph_sh))
+)))
+```
+
+## B. Frequency ladder
+
+The baseline refit on outcomes of increasing frequency. If player effects
+become more reliable with more events per minute, as in hockey (goals, shots,
+Corsi), the frequent outcomes are where individual and interaction effects
+can be estimated.
+
+```{r frequency}
+s <- frequency_summary(tar_read(freq_cv), tar_read(freq_sh), tar_read(freq_y),
+                       segment_table$minutes)
+show_table(frequency_table(s))
+```
+
+```{r frequency-plot, fig.width = 7, fig.height = 4.5}
+plot_frequency_ladder(s)
+```
+
+## C. Interactions on final-third entries
+
+Final-third entries are the outcome where offensive player effects are most
+reliable (Part B), with four times the events of shots. The structured models
+from Part A are refit on them, on the same folds, against M3 on the same
+outcome. Role interactions are population-level terms, so they do not need
+reliable individual effects.
+
+```{r interactions}
+ft_cv <- tar_read(freq_cv)$final_third_entries
+ft_sh <- Filter(function(d) d$outcome[1] == "final_third_entries", tar_read(freq_sh))[[1]]
+show_table(structure_table(ft_cv, ft_sh, list(
+  "M4: positional prior" = list(cv = tar_read(ft_pos_cv), model = "M4", sh = tar_read(ft_m4_sh)),
+  "MRoles: role interactions" = list(cv = tar_read(ft_pos_cv), model = "MRoles", sh = tar_read(ft_roles_sh)),
+  "MGraph: teammate graph" = list(cv = tar_read(ft_graph_cv), model = "MGraph", sh = tar_read(ft_graph_sh))
+)))
+```
+
+Position-count and role-interaction coefficients from the full MRoles fit,
+with delete-one-fold jackknife SEs. "att" terms describe the attacking side's
+lineup, "def" terms the defending side's.
+
+```{r role-coefs}
+show_table(role_coef_table(tar_read(ft_roles_full), tar_read(ft_roles_jk)))
+```
+
+Pending: a cross-team similarity graph (players with similar roles on
+different teams), which can add information the team effects do not.
+
+## D. Identifiability simulation
+
+Player effects of known size are planted on the real lineup design (actual
+segments, lineups, minutes, game states and team effects), outcomes are
+simulated, and M3 is fit exactly as in the real analysis, with the prior SD set
+to the true effect SD (the best case for ridge). Reliability is half versus
+half, as for the real outcomes; accuracy correlates half-season estimates with
+the true effects. Extra seasons repeat the same lineups, so the seasons table
+is a floor on what more data would buy.
+
+```{r simulation, fig.width = 8, fig.height = 4.5}
+sim <- sim_summary(tar_read(sim_res))
+plot_simulation(sim, s)
+```
+
+```{r simulation-table}
+show_table(simulation_table(sim))
+```
